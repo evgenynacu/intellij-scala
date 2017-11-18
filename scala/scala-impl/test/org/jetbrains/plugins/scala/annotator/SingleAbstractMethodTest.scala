@@ -302,7 +302,7 @@ abstract class SingleAbstractMethodTestBase extends ScalaFixtureTestCase with As
     checkCodeHasNoErrors(code)
   }
 
-  def testSCL11156(): Unit = {
+  def testSCL11156_1(): Unit = {
     val code =
       """
         |trait F[T, R] {
@@ -315,6 +315,28 @@ abstract class SingleAbstractMethodTestBase extends ScalaFixtureTestCase with As
         |val error: Specific = _ => 1
       """.stripMargin
     checkCodeHasNoErrors(code)
+  }
+
+  def testSCL11156_2(): Unit = {
+    val code =
+      """
+        |object Test {
+        |
+        |  trait Parser[T] extends (String => T)
+        |
+        |  val item: Parser[Char] = _ => 'q'
+        |}
+      """.stripMargin
+    checkCodeHasNoErrors(code)
+  }
+
+  def testSCL11156_Java(): Unit = {
+    val javaCode = Some {
+      "public interface StringSupplier extends java.util.function.Supplier<String> {}"
+    }
+    val code =
+      """val x: StringSupplier = () => "ab" """
+    checkCodeHasNoErrors(code, javaCode)
   }
 
   def testOverload(): Unit = {
@@ -515,6 +537,27 @@ abstract class SingleAbstractMethodTestBase extends ScalaFixtureTestCase with As
     assertMatches(messages(code)) {
       case Error("(s: String) => ???", typeMismatch()) :: Nil =>
     }
+  }
+
+  def testSCL11064(): Unit = {
+    val code =
+      """
+        |import scala.language.higherKinds
+        |
+        |object FBound212 {
+        |  trait Parser[A, F[X] <: Parser[X, F]] {
+        |    def parse(s: String): A
+        |
+        |    def map[B](f: A ⇒ B): F[B]
+        |  }
+        |
+        |  trait Foo[A] extends Parser[A, Foo]{
+        |    self ⇒
+        |    override def map[B](f: (A) ⇒ B) = s ⇒ f(self.parse(s))
+        |  }
+        |}
+      """.stripMargin
+    checkCodeHasNoErrors(code)
   }
 
   def checkCodeHasNoErrors(scalaCode: String, javaCode: Option[String] = None) {
