@@ -311,7 +311,6 @@ abstract class SingleAbstractMethodTestBase extends ScalaFixtureTestCase with As
         |
         |trait Specific extends F[String, Int]
         |
-        |val ok: F[Int, Int] = _ => 1
         |val error: Specific = _ => 1
       """.stripMargin
     checkCodeHasNoErrors(code)
